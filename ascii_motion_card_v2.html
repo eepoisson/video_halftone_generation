@@ -258,8 +258,8 @@ function processHalftoneCanvas(sc, W, H) {
 
   // 1. 计算旋转矩阵参数
   const angle = angleDeg * Math.PI / 180;
-  const sin = Math.sin(-angle); 
-  const cos = Math.cos(-angle);
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
 
   // 2. 根据对角线计算画布旋转后的覆盖范围
   const diag = Math.sqrt(W * W + H * H);
