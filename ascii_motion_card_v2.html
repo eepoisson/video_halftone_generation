@@ -1,208 +1,399 @@
-
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Halftone Motion Processor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-.root { padding: 1.5rem 0; }
-.dz {
-  border: 1.5px dashed var(--color-border-secondary);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem 1rem;
-  text-align: center;
-  cursor: pointer;
-  background: var(--color-background-secondary);
-  position: relative;
-  transition: border-color 0.15s;
+:root {
+  --color-border-secondary: #d1d5db;
+  --color-border-info: #3b82f6;
+  --color-background-secondary: #f3f4f6;
+  --color-background-info: #eff6ff;
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #9ca3af;
+  --color-text-info: #2563eb;
+  --color-text-danger: #ef4444;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
 }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+body { padding: 20px; max-width: 600px; margin: 0 auto; background: #fff; }
+.root { padding: 1.5rem 0; }
+.dz { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 2rem 1rem; text-align: center; cursor: pointer; background: var(--color-background-secondary); position: relative; transition: border-color 0.15s, background 0.15s; }
 .dz.over { border-color: var(--color-border-info); background: var(--color-background-info); }
 .dz input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1rem 0; }
 .ctrl label { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 6px; }
 .ctrl .val { float: right; font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
-.ctrl input[type=range], .ctrl select { width: 100%; }
-.ascii-card {
-  background: #080808;
-  border-radius: var(--border-radius-lg);
-  padding: 1rem 1rem 1.5rem;
-  margin: 1rem 0;
-  border: 0.5px solid #1e1e1e;
-  position: relative;
-}
-.card-corner { position: absolute; font-size: 10px; color: #333; font-family: monospace; }
-.tl { top: 8px; left: 12px; }
-.tr { top: 8px; right: 12px; }
-.bl { bottom: 8px; left: 12px; }
-.br { bottom: 8px; right: 12px; }
-.card-meta { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.card-meta span { font-size: 11px; color: #333; font-family: monospace; }
-#ascii-out {
-  font-family: monospace;
-  font-size: 6.5px;
-  line-height: 1.15;
-  white-space: pre;
-  display: block;
-  text-align: left;
-  color: #00ff88;
-  letter-spacing: 0.4px;
-  min-height: 100px;
-}
-.ascii-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 120px; color: #2a2a2a; font-family: monospace; font-size: 12px; gap: 6px;
-}
-.progress { height: 3px; background: #111; border-radius: 99px; overflow: hidden; margin: 0.5rem 0; }
-.progress-fill { height: 100%; background: #00ff88; border-radius: 99px; width: 0; transition: width 0.1s; }
-.status { font-size: 12px; color: var(--color-text-secondary); text-align: center; min-height: 18px; margin: 0.25rem 0; }
+.ctrl input[type=range] { width: 100%; }
+.section-label { font-size: 12px; color: var(--color-text-secondary); margin: 1rem 0 0.5rem; }
+.pal-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pal-btn { width: 40px; height: 40px; border-radius: var(--border-radius-md); border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.1s; }
+.pal-btn.active { border-color: #333; }
+.pal-dot { width: 18px; height: 18px; border-radius: 50%; }
+.preview { margin: 1rem 0; border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-secondary); min-height: 180px; display: flex; align-items: center; justify-content: center; position: relative; }
+.preview img, .preview canvas { width: 100%; height: auto; display: block; }
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; gap: 8px; color: var(--color-text-tertiary); }
 .btn-row { display: flex; gap: 8px; margin-top: 1rem; }
-.btn-row button { flex: 1; }
-.tag { font-size: 11px; padding: 2px 10px; border-radius: 99px; background: var(--color-background-success); color: var(--color-text-success); display: inline-block; margin-bottom: 1rem; }
-.section-label { font-size: 12px; color: var(--color-text-secondary); margin: 1rem 0 0.4rem; }
+.btn-row button { flex: 1; padding: 10px; border: 1px solid var(--color-border-secondary); background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 500; }
+.btn-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-row button:hover:not(:disabled) { background: #f9fafb; }
+.tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 99px; background: var(--color-background-info); color: var(--color-text-info); margin-bottom: 1rem; }
+.processing { font-size: 13px; color: var(--color-text-secondary); text-align: center; padding: 2rem; width: 100%; }
+.progress-container { width: 100%; max-width: 200px; margin: 10px auto; display: none; }
+.progress { height: 4px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+.progress-fill { height: 100%; background: #3b82f6; border-radius: 99px; width: 0; transition: width 0.1s; }
+.progress-text { font-size: 11px; color: var(--color-text-secondary); }
+.video-hud { position: absolute; bottom: 8px; left: 8px; font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; display: none; pointer-events: none; }
 </style>
+</head>
+<body>
 
 <div class="root">
-  <h2 class="sr-only">ASCII Motion Card Generator v2 — upload a video to convert it into ASCII animation</h2>
-  <span class="tag">支持 MP4 · MOV · WebM</span>
+  <span class="tag">高级半调算法引擎 (重构版)</span>
 
   <div class="dz" id="dz">
-    <input type="file" id="file-in" accept="video/mp4,video/webm,video/quicktime,video/*">
+    <input type="file" id="file-in" accept="image/*,video/mp4,video/webm,video/quicktime,video/*">
     <p style="font-size:15px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">
-      <i class="ti ti-video" aria-hidden="true" style="font-size:20px;vertical-align:-3px;margin-right:6px"></i>上传视频文件
+      <i class="ti ti-upload" aria-hidden="true" style="font-size:20px;vertical-align:-3px;margin-right:6px"></i>上传图片或视频
     </p>
-    <p style="font-size:13px;color:var(--color-text-secondary)">MP4 · MOV · WebM — 建议10秒以内</p>
+    <p style="font-size:13px;color:var(--color-text-secondary)">JPG / PNG / MP4 / MOV</p>
   </div>
 
-  <p class="section-label">参数</p>
+  <p class="section-label">配色方案</p>
+  <div class="pal-row" id="pal-row"></div>
+
   <div class="ctrl-grid">
     <div class="ctrl">
-      <label>字符密度 <span class="val" id="v-cols">55</span></label>
-      <input type="range" id="s-cols" min="25" max="100" value="55" step="5">
+      <label>网点大小 <span class="val" id="v-cell">5</span>px</label>
+      <input type="range" id="s-cell" min="2" max="18" value="5" step="1">
     </div>
     <div class="ctrl">
-      <label>抓帧速率 <span class="val" id="v-fps">10</span> fps</label>
-      <input type="range" id="s-fps" min="4" max="20" value="10" step="2">
+      <label>网点角度 <span class="val" id="v-ang">45</span>°</label>
+      <input type="range" id="s-ang" min="0" max="90" value="45" step="5">
     </div>
     <div class="ctrl">
-      <label>字符集</label>
-      <select id="s-charset">
-        <option value="detailed">精细 @#S%?*+;:,.</option>
-        <option value="block">方块 █▓▒░ </option>
-        <option value="binary">代码 10 </option>
-        <option value="minimal">极简 ■□ </option>
-      </select>
+      <label>对比度 <span class="val" id="v-con">1.4</span></label>
+      <input type="range" id="s-con" min="0.6" max="3.5" value="1.4" step="0.1">
     </div>
     <div class="ctrl">
-      <label>颜色</label>
-      <select id="s-color">
-        <option value="#00ff88">矩阵绿</option>
-        <option value="#ffaa00">琥珀橙</option>
-        <option value="#44aaff">赛博蓝</option>
-        <option value="#ff66bb">霓虹粉</option>
-        <option value="#ffffff">纯白</option>
-        <option value="#aaffaa">薄荷</option>
-      </select>
+      <label>亮度偏移 <span class="val" id="v-bri">1.1</span></label>
+      <input type="range" id="s-bri" min="0.5" max="2.0" value="1.1" step="0.1">
+    </div>
+    <div class="ctrl">
+      <label>纸张颗粒 <span class="val" id="v-grain">15</span></label>
+      <input type="range" id="s-grain" min="0" max="70" value="15" step="5">
+    </div>
+    <div class="ctrl" id="fps-ctrl" style="display:none">
+      <label>视频抓帧速率 <span class="val" id="v-fps">10</span> fps</label>
+      <input type="range" id="s-fps" min="4" max="24" value="10" step="2">
     </div>
   </div>
 
-  <div class="progress" id="prog-wrap" style="display:none">
-    <div class="progress-fill" id="prog-fill"></div>
-  </div>
-  <p class="status" id="status">上传视频后开始抓帧</p>
-
-  <div class="ascii-card">
-    <span class="card-corner tl">WENDE·STUDIO</span>
-    <span class="card-corner tr">ASCII·MOTION</span>
-    <span class="card-corner bl" id="c-frame">frame 0/0</span>
-    <span class="card-corner br" id="c-fps">— fps</span>
-    <div class="card-meta">
-      <span id="m-left">◈ STANDBY</span>
-      <span id="m-right">——</span>
+  <p class="section-label">预览</p>
+  <div class="preview" id="preview-area">
+    <div class="empty" id="preview-empty">
+      <i class="ti ti-photo" aria-hidden="true" style="font-size:36px"></i>
+      <span style="font-size:13px">上传后显示渲染效果</span>
     </div>
-    <pre id="ascii-out"><div class="ascii-empty"><span style="color:#1a1a1a">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span><span>等待视频上传…</span></div></pre>
+    <div class="processing" id="preview-loading" style="display:none;">
+      <i class="ti ti-loader" aria-hidden="true" style="font-size:24px; display:block; margin: 0 auto 10px;"></i>
+      <div id="loading-msg">渲染中…</div>
+      <div class="progress-container" id="prog-wrap">
+        <div class="progress"><div class="progress-fill" id="prog-fill"></div></div>
+        <div class="progress-text" id="prog-text">0%</div>
+      </div>
+    </div>
+    <img id="preview-img" style="display:none;">
+    <div class="video-hud" id="video-hud">frame 0/0</div>
   </div>
 
   <div class="btn-row">
-    <button id="btn-play" disabled><i class="ti ti-player-play" aria-hidden="true"></i> 播放</button>
-    <button id="btn-export" disabled><i class="ti ti-download" aria-hidden="true"></i> 导出 HTML</button>
+    <button id="btn-re" disabled><i class="ti ti-refresh"></i> 重新渲染</button>
+    <button id="btn-play" style="display:none"><i class="ti ti-player-play"></i> 播放</button>
+    <button id="btn-dl" disabled><i class="ti ti-download"></i> 下载图片</button>
+    <button id="btn-export" style="display:none"><i class="ti ti-code"></i> 导出动画 HTML</button>
   </div>
 </div>
 
-<video id="vid" muted playsinline crossorigin="anonymous" style="display:none;position:absolute;left:-9999px"></video>
-<canvas id="cv" style="display:none;position:absolute;left:-9999px"></canvas>
+<canvas id="work-canvas" style="display:none"></canvas>
+<canvas id="src-canvas" style="display:none"></canvas>
+<video id="vid" muted playsinline crossorigin="anonymous" style="display:none;"></video>
 
 <script>
-const CHARSETS = {
-  detailed: '@#S%?*+;:,. ',
-  block: '█▓▒░  ',
-  binary: '1100  ',
-  minimal: '■▪·  '
-};
+const PALETTES = [
+  { label: '蓝·奶油', dot: '#6ba3c8', bg: '#eae5dd', grain: '#c8bfb0' },
+  { label: '深蓝·米白', dot: '#3d6f96', bg: '#f2ede5', grain: '#c0b8aa' },
+  { label: '墨黑·羊皮', dot: '#2e2b26', bg: '#f4f0e8', grain: '#cfc8ba' },
+  { label: '棕赭·米黄', dot: '#7a4f35', bg: '#f5ede0', grain: '#d4bfa8' },
+  { label: '紫兰·薰衣', dot: '#7067c4', bg: '#f0effe', grain: '#c8c2ec' },
+  { label: '墨绿·白', dot: '#2e5e38', bg: '#eef5ec', grain: '#b8d4b4' },
+  { label: '玫红·粉白', dot: '#c44878', bg: '#fdf0f5', grain: '#f0c8d8' },
+  { label: '金棕·暖米', dot: '#9a6820', bg: '#f7f0e2', grain: '#d8c898' },
+];
 
-let frames = [];
+let currentPal = 0;
+let currentMode = null; 
+let currentFile = null;
+let srcImg = null;
+
+let videoFrames = []; 
 let playTimer = null;
 let frameIdx = 0;
 let isPlaying = false;
 let lastTs = 0;
 
-const vid = document.getElementById('vid');
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
-const asciiOut = document.getElementById('ascii-out');
-const statusEl = document.getElementById('status');
-const progFill = document.getElementById('prog-fill');
+const palRow = document.getElementById('pal-row');
+const sCell = bindSlider('s-cell', 'v-cell', 0);
+const sAng = bindSlider('s-ang', 'v-ang', 0); // 绑定角度滑块
+const sCon = bindSlider('s-con', 'v-con', 1);
+const sBri = bindSlider('s-bri', 'v-bri', 1);
+const sGrain = bindSlider('s-grain', 'v-grain', 0);
+const sFps = bindSlider('s-fps', 'v-fps', 0);
+
+const dz = document.getElementById('dz');
+const fileIn = document.getElementById('file-in');
+const previewEmpty = document.getElementById('preview-empty');
+const previewLoading = document.getElementById('preview-loading');
+const previewImg = document.getElementById('preview-img');
 const progWrap = document.getElementById('prog-wrap');
+const progFill = document.getElementById('prog-fill');
+const progText = document.getElementById('prog-text');
+const loadingMsg = document.getElementById('loading-msg');
+const videoHud = document.getElementById('video-hud');
+const vid = document.getElementById('vid');
+
+const btnRe = document.getElementById('btn-re');
+const btnDl = document.getElementById('btn-dl');
 const btnPlay = document.getElementById('btn-play');
 const btnExport = document.getElementById('btn-export');
-const cFrame = document.getElementById('c-frame');
-const cFps = document.getElementById('c-fps');
-const mLeft = document.getElementById('m-left');
+const fpsCtrl = document.getElementById('fps-ctrl');
 
-const sCols = document.getElementById('s-cols');
-const sFps = document.getElementById('s-fps');
-const sCharset = document.getElementById('s-charset');
-const sColor = document.getElementById('s-color');
+PALETTES.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'pal-btn' + (i === 0 ? ' active' : '');
+  btn.title = p.label;
+  btn.style.cssText = `background:${p.bg};`;
+  btn.innerHTML = `<span class="pal-dot" style="background:${p.dot}"></span>`;
+  btn.addEventListener('click', () => {
+    currentPal = i;
+    document.querySelectorAll('.pal-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    triggerRender();
+  });
+  palRow.appendChild(btn);
+});
 
-sCols.addEventListener('input', () => document.getElementById('v-cols').textContent = sCols.value);
-sFps.addEventListener('input', () => document.getElementById('v-fps').textContent = sFps.value);
-sColor.addEventListener('change', () => asciiOut.style.color = sColor.value);
-
-function pixelToChar(lum) {
-  const chars = CHARSETS[sCharset.value] || CHARSETS.detailed;
-  const idx = Math.floor((1 - lum) * (chars.length - 1));
-  return chars[Math.max(0, Math.min(chars.length - 1, idx))];
+function bindSlider(id, outId, dec) {
+  const el = document.getElementById(id);
+  const out = document.getElementById(outId);
+  el.addEventListener('change', () => triggerRender());
+  el.addEventListener('input', () => {
+    out.textContent = parseFloat(el.value).toFixed(dec);
+  });
+  return el;
 }
 
-function imageDataToAscii(data, w, h, cols) {
-  const charW = w / cols;
-  const charH = charW * 2.1;
-  const rows = Math.floor(h / charH);
-  let out = '';
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const px = Math.floor(c * charW);
-      const py = Math.floor(r * charH);
-      let sum = 0, cnt = 0;
-      const ex = Math.min(px + Math.ceil(charW), w);
-      const ey = Math.min(py + Math.ceil(charH), h);
-      for (let y = py; y < ey; y++) {
-        for (let x = px; x < ex; x++) {
-          const i = (y * w + x) * 4;
-          sum += data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-          cnt++;
+function triggerRender() {
+  if (currentMode === 'image' && srcImg) {
+    renderImage();
+  } else if (currentMode === 'video' && currentFile) {
+    processVideo(currentFile);
+  }
+}
+
+function handleFile(file) {
+  currentFile = file;
+  stopPlay();
+  
+  if (file.type.startsWith('video/')) {
+    currentMode = 'video';
+    btnPlay.style.display = 'flex';
+    btnExport.style.display = 'flex';
+    btnDl.style.display = 'none';
+    fpsCtrl.style.display = 'block';
+    processVideo(file);
+  } else {
+    currentMode = 'image';
+    btnPlay.style.display = 'none';
+    btnExport.style.display = 'none';
+    btnDl.style.display = 'flex';
+    fpsCtrl.style.display = 'none';
+    videoHud.style.display = 'none';
+    
+    const url = URL.createObjectURL(file);
+    srcImg = new Image();
+    srcImg.onload = () => { URL.revokeObjectURL(url); renderImage(); };
+    srcImg.src = url;
+  }
+}
+
+fileIn.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+// ==== 重构的半调核心算法 (带坐标旋转与暗部融合) ====
+function processHalftoneCanvas(sc, W, H) {
+  const pal = PALETTES[currentPal];
+  const cellSize = parseInt(sCell.value);
+  const angleDeg = parseInt(sAng.value);
+  const grainAmt = parseInt(sGrain.value);
+  const srcPx = sc.getImageData(0, 0, W, H).data;
+
+  const outCv = document.getElementById('work-canvas');
+  outCv.width = W; outCv.height = H;
+  const oc = outCv.getContext('2d');
+
+  // 绘制背景底色
+  oc.fillStyle = pal.bg;
+  oc.fillRect(0, 0, W, H);
+  oc.fillStyle = pal.dot;
+
+  // 1. 计算旋转矩阵参数
+  const angle = angleDeg * Math.PI / 180;
+  const sin = Math.sin(-angle); 
+  const cos = Math.cos(-angle);
+
+  // 2. 根据对角线计算画布旋转后的覆盖范围
+  const diag = Math.sqrt(W * W + H * H);
+  const cols = Math.ceil(diag / cellSize);
+  const rows = Math.ceil(diag / cellSize);
+
+  // 从中心向外侧平铺的起始点
+  const startX = -diag / 2;
+  const startY = -diag / 2;
+
+  oc.save();
+  oc.translate(W / 2, H / 2);
+  oc.rotate(angle);
+
+  // 3. 放开半径限制：允许网点相交！( cellSize * 0.85 足够覆盖正方形对角线间隙 )
+  const maxR = cellSize * 0.85;
+  
+  // 采样范围适度收紧，增加锐度
+  const halfSize = Math.max(1, Math.floor(cellSize / 2.5)); 
+
+  for (let r = 0; r <= rows; r++) {
+    for (let c = 0; c <= cols; c++) {
+      // 旋转坐标系中的网点坐标
+      const rx = startX + c * cellSize;
+      const ry = startY + r * cellSize;
+
+      // 映射回原图坐标系去取色
+      const px = Math.round((rx * cos - ry * sin) + W / 2);
+      const py = Math.round((rx * sin + ry * cos) + H / 2);
+
+      // 剔除明显不在画面内的点
+      if (px >= -cellSize && px <= W + cellSize && py >= -cellSize && py <= H + cellSize) {
+        
+        // 在该点附近采样求平均亮度
+        let sum = 0, cnt = 0;
+        for (let dy = -halfSize; dy <= halfSize; dy++) {
+          for (let dx = -halfSize; dx <= halfSize; dx++) {
+            const nx = px + dx, ny = py + dy;
+            if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
+              const i = (ny * W + nx) * 4;
+              sum += srcPx[i] * 0.299 + srcPx[i+1] * 0.587 + srcPx[i+2] * 0.114;
+              cnt++;
+            }
+          }
+        }
+
+        let lum = 1; // 越界默认为亮部（不画点）
+        if (cnt > 0) lum = sum / cnt / 255;
+
+        // 4. 根据亮度计算绘制半径
+        const rad = (1 - lum) * maxR;
+
+        // 设置一个最小阈值，保证高光区域绝对干净不飞点
+        if (rad > 0.5) {
+          oc.beginPath();
+          oc.arc(rx, ry, rad, 0, Math.PI * 2);
+          oc.fill();
         }
       }
-      out += pixelToChar((sum / cnt) / 255);
     }
-    out += '\n';
   }
-  return out;
+  oc.restore();
+
+  // 添加颗粒噪点
+  if (grainAmt > 0) {
+    const gd = oc.getImageData(0, 0, W, H);
+    const d = gd.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (Math.random() - 0.5) * grainAmt * 2;
+      d[i]   = Math.max(0, Math.min(255, d[i]   + n));
+      d[i+1] = Math.max(0, Math.min(255, d[i+1] + n));
+      d[i+2] = Math.max(0, Math.min(255, d[i+2] + n));
+    }
+    oc.putImageData(gd, 0, 0);
+  }
+  return outCv;
+}
+
+function renderImage() {
+  previewEmpty.style.display = 'none';
+  previewImg.style.display = 'none';
+  previewLoading.style.display = 'block';
+  progWrap.style.display = 'none';
+  loadingMsg.textContent = '渲染中…';
+  
+  btnRe.disabled = true;
+  btnDl.disabled = true;
+
+  setTimeout(() => {
+    try {
+      const contrast = parseFloat(sCon.value);
+      const brightness = parseFloat(sBri.value);
+      const MAX_W = 1000; // 提高静态图片的渲染精度
+      const scale = Math.min(1, MAX_W / srcImg.width);
+      const W = Math.round(srcImg.width * scale);
+      const H = Math.round(srcImg.height * scale);
+
+      const srcCv = document.getElementById('src-canvas');
+      srcCv.width = W; srcCv.height = H;
+      const sc = srcCv.getContext('2d');
+      sc.filter = `contrast(${contrast}) brightness(${brightness}) saturate(0)`;
+      sc.drawImage(srcImg, 0, 0, W, H);
+
+      const outCv = processHalftoneCanvas(sc, W, H);
+      
+      previewImg.src = outCv.toDataURL('image/png');
+      previewImg.style.display = 'block';
+      previewLoading.style.display = 'none';
+
+      btnRe.disabled = false;
+      btnDl.disabled = false;
+    } catch(e) {
+      loadingMsg.innerHTML = '<span style="color:var(--color-text-danger)">处理失败，请重试</span>';
+    }
+  }, 50);
 }
 
 async function processVideo(file) {
-  frames = [];
+  videoFrames = [];
   frameIdx = 0;
   stopPlay();
+  
+  btnRe.disabled = true;
   btnPlay.disabled = true;
   btnExport.disabled = true;
+  
+  previewEmpty.style.display = 'none';
+  previewImg.style.display = 'none';
+  videoHud.style.display = 'none';
+  previewLoading.style.display = 'block';
   progWrap.style.display = 'block';
   progFill.style.width = '0%';
+  progText.textContent = '准备抓帧...';
+  loadingMsg.textContent = '正在逐帧处理半调特效';
 
   const url = URL.createObjectURL(file);
   vid.src = url;
@@ -214,15 +405,17 @@ async function processVideo(file) {
 
   const duration = vid.duration;
   const targetFps = parseInt(sFps.value);
-  const cols = parseInt(sCols.value);
-  const maxFrames = Math.min(Math.floor(duration * targetFps), 240);
+  const maxFrames = Math.min(Math.floor(duration * targetFps), 100);
   const interval = duration / maxFrames;
 
-  cv.width = cols * 2;
-  cv.height = Math.round(cv.width * vid.videoHeight / vid.videoWidth);
+  const MAX_W = 480; 
+  const scale = Math.min(1, MAX_W / vid.videoWidth);
+  const W = Math.round(vid.videoWidth * scale);
+  const H = Math.round(vid.videoHeight * scale);
 
-  statusEl.textContent = `准备抓帧，共 ${maxFrames} 帧…`;
-  mLeft.textContent = '◈ CAPTURING';
+  const srcCv = document.getElementById('src-canvas');
+  srcCv.width = W; srcCv.height = H;
+  const sc = srcCv.getContext('2d');
 
   let captured = 0;
   let lastCaptureTime = -1;
@@ -234,68 +427,69 @@ async function processVideo(file) {
       if (!vid.paused && !vid.ended) {
         const t = vid.currentTime;
         if (t - lastCaptureTime >= interval - 0.01 && captured < maxFrames) {
-          ctx.drawImage(vid, 0, 0, cv.width, cv.height);
-          const imgData = ctx.getImageData(0, 0, cv.width, cv.height);
-          frames.push(imageDataToAscii(imgData.data, cv.width, cv.height, cols));
+          sc.filter = `contrast(${parseFloat(sCon.value)}) brightness(${parseFloat(sBri.value)}) saturate(0)`;
+          sc.drawImage(vid, 0, 0, W, H);
+          
+          const processedCv = processHalftoneCanvas(sc, W, H);
+          videoFrames.push(processedCv.toDataURL('image/webp', 0.8));
+
           lastCaptureTime = t;
           captured++;
-          const pct = Math.round(captured / maxFrames * 100);
+          
+          const pct = Math.round((captured / maxFrames) * 100);
           progFill.style.width = pct + '%';
-          statusEl.textContent = `抓帧中 ${captured} / ${maxFrames}`;
-          cFrame.textContent = `frame ${captured}/${maxFrames}`;
-          if (frames.length === 1) showFrame(0);
+          progText.textContent = `抓帧中 ${captured} / ${maxFrames} (${pct}%)`;
+          
+          if (videoFrames.length === 1) {
+            previewImg.src = videoFrames[0];
+            previewImg.style.display = 'block';
+          }
         }
         if (captured < maxFrames) {
           requestAnimationFrame(onFrame);
         } else {
-          vid.pause();
-          URL.revokeObjectURL(url);
-          done();
+          vid.pause(); URL.revokeObjectURL(url); resolve();
         }
       } else if (vid.ended) {
-        URL.revokeObjectURL(url);
-        done();
+        URL.revokeObjectURL(url); resolve();
       }
     }
-
-    function done() {
-      progWrap.style.display = 'none';
-      statusEl.textContent = `✓ 完成，共 ${frames.length} 帧`;
-      mLeft.textContent = '◈ LIVE';
-      btnPlay.disabled = false;
-      btnExport.disabled = false;
-      resolve();
-    }
-
-    vid.play().then(() => {
-      requestAnimationFrame(onFrame);
-    }).catch(() => {
-      statusEl.textContent = '视频格式不支持，请尝试 MP4';
-      progWrap.style.display = 'none';
+    
+    vid.play().then(() => requestAnimationFrame(onFrame)).catch(() => {
+      loadingMsg.innerHTML = '<span style="color:var(--color-text-danger)">视频解码失败</span>';
       resolve();
     });
   });
 
-  if (frames.length > 0) startPlay();
+  if (videoFrames.length > 0) {
+    previewLoading.style.display = 'none';
+    previewImg.style.display = 'block';
+    videoHud.style.display = 'block';
+    btnRe.disabled = false;
+    btnPlay.disabled = false;
+    btnExport.disabled = false;
+    startPlay();
+  }
 }
 
 function showFrame(i) {
-  asciiOut.textContent = frames[i] || '';
-  cFrame.textContent = `frame ${i+1}/${frames.length}`;
+  if(!videoFrames[i]) return;
+  previewImg.src = videoFrames[i];
+  videoHud.textContent = `frame ${i+1}/${videoFrames.length}`;
 }
 
 function startPlay() {
   if (playTimer) cancelAnimationFrame(playTimer);
   isPlaying = true;
-  btnPlay.innerHTML = '<i class="ti ti-player-pause" aria-hidden="true"></i> 暂停';
-  const interval = 1000 / parseInt(sFps.value);
+  btnPlay.innerHTML = '<i class="ti ti-player-pause"></i> 暂停';
+  const targetFps = parseInt(sFps.value);
+  const frameInterval = 1000 / targetFps;
 
   function tick(ts) {
     if (!isPlaying) return;
-    if (ts - lastTs >= interval) {
-      if (lastTs > 0) cFps.textContent = Math.round(1000 / (ts - lastTs) * 10) / 10 + ' fps';
+    if (ts - lastTs >= frameInterval) {
       lastTs = ts;
-      frameIdx = (frameIdx + 1) % frames.length;
+      frameIdx = (frameIdx + 1) % videoFrames.length;
       showFrame(frameIdx);
     }
     playTimer = requestAnimationFrame(tick);
@@ -306,53 +500,62 @@ function startPlay() {
 function stopPlay() {
   isPlaying = false;
   if (playTimer) cancelAnimationFrame(playTimer);
-  btnPlay.innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i> 播放';
+  btnPlay.innerHTML = '<i class="ti ti-player-play"></i> 播放';
 }
 
 btnPlay.addEventListener('click', () => {
-  if (frames.length === 0) return;
+  if (videoFrames.length === 0) return;
   isPlaying ? stopPlay() : startPlay();
 });
 
-btnExport.addEventListener('click', () => {
-  if (!frames.length) return;
-  const color = sColor.value;
-  const fps = parseInt(sFps.value);
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ASCII Motion Card</title>
-<style>body{background:#060606;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-.card{background:#080808;border:0.5px solid #1e1e1e;border-radius:12px;padding:16px 16px 24px;position:relative;max-width:90vw}
-.c{position:absolute;font-size:10px;color:#2a2a2a;font-family:monospace}
-.tl{top:8px;left:12px}.tr{top:8px;right:12px}.bl{bottom:8px;left:12px}.br{bottom:8px;right:12px}
-.meta{display:flex;justify-content:space-between;margin-bottom:6px}
-.meta span{font-size:11px;color:#2a2a2a;font-family:monospace}
-pre{font-family:monospace;font-size:6.5px;line-height:1.15;white-space:pre;color:${color};letter-spacing:0.4px}
-</style></head><body><div class="card">
-<span class="c tl">WENDE·STUDIO</span><span class="c tr">ASCII·MOTION</span>
-<span class="c bl" id="cf">frame 0</span><span class="c br" id="fp">— fps</span>
-<div class="meta"><span id="ml">◈ LIVE</span><span id="mr"></span></div>
-<pre id="out"></pre></div>
-<script>
-const F=${JSON.stringify(frames)};
-let i=0,last=0;const fps=${fps},iv=1000/fps;
-const out=document.getElementById('out'),cf=document.getElementById('cf'),fp=document.getElementById('fp');
-function tick(ts){if(ts-last>=iv){if(last>0)fp.textContent=Math.round(1000/(ts-last)*10)/10+' fps';last=ts;i=(i+1)%F.length;out.textContent=F[i];cf.textContent='frame '+(i+1)+'/'+F.length;}requestAnimationFrame(tick);}
-requestAnimationFrame(tick);
-<\/script></body></html>`;
+btnRe.addEventListener('click', () => triggerRender());
+
+btnDl.addEventListener('click', () => {
+  if (currentMode !== 'image') return;
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-  a.download = 'ascii-motion-card.html';
+  a.href = previewImg.src;
+  a.download = 'halftone-pro.png';
   a.click();
 });
 
-const dz = document.getElementById('dz');
-const fileIn = document.getElementById('file-in');
-fileIn.addEventListener('change', e => { if (e.target.files[0]) processVideo(e.target.files[0]); });
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('over');
-  if (e.dataTransfer.files[0]) processVideo(e.dataTransfer.files[0]);
+btnExport.addEventListener('click', () => {
+  if (videoFrames.length === 0) return;
+  const fps = parseInt(sFps.value);
+  const pal = PALETTES[currentPal];
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Halftone Motion Card</title>
+<style>
+body{background:#060606;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:monospace}
+.card{background:${pal.bg};padding:16px 16px 20px;border-radius:12px;position:relative;max-width:90vw;box-shadow: 0 20px 40px rgba(0,0,0,0.5);}
+.img-wrap { border-radius: 8px; overflow:hidden; border: 1px solid rgba(0,0,0,0.1); }
+img{display:block;width:100%;height:auto;}
+.meta{display:flex;justify-content:space-between;margin-top:12px;}
+.meta span{font-size:11px;color:${pal.dot};opacity:0.8;}
+</style></head><body>
+<div class="card">
+  <div class="img-wrap"><img id="out" src="${videoFrames[0]}"></div>
+  <div class="meta"><span id="ml">◈ LIVE</span><span id="mr">frame 1</span></div>
+</div>
+<script>
+const F=${JSON.stringify(videoFrames)};
+let i=0,last=0;const fps=${fps},iv=1000/fps;
+const out=document.getElementById('out'), mr=document.getElementById('mr');
+function tick(ts){
+  if(ts-last>=iv){
+    last=ts; i=(i+1)%F.length; out.src=F[i];
+    mr.textContent='frame '+(i+1)+'/'+F.length;
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+<\/script></body></html>`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  a.download = 'halftone-motion-card.html';
+  a.click();
 });
 
-asciiOut.style.color = sColor.value;
 </script>
+</body>
+</html>
